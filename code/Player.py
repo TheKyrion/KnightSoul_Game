@@ -1,5 +1,5 @@
 import pygame
-from code.Const import ALTURA_TELA
+from code.Const import ALTURA_TELA, CARPET_TOP, CARPET_BOTTOM
 from code.Entity import Entity
 
 
@@ -106,9 +106,9 @@ class Player(Entity):
 
         # -------- movimento vertical --------------------------------------
         if keys[pygame.K_UP]:
-            self.rect.y = max(0, self.rect.y - self.speed_y)
+            self.rect.y = max(CARPET_TOP, self.rect.y - self.speed_y)
         if keys[pygame.K_DOWN]:
-            self.rect.y = min(ALTURA_TELA - self.rect.height, self.rect.y + self.speed_y)
+            self.rect.y = min(CARPET_BOTTOM - self.rect.height, self.rect.y + self.speed_y)
 
         # -------- idle / run ----------------------------------------------
         if keys[pygame.K_RIGHT] or keys[pygame.K_LEFT]:
