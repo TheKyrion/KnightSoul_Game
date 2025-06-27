@@ -1,6 +1,6 @@
 from code.Background import Background
 from code.Const import LARG_TELA, ALTURA_TELA
-from code.Player import Player
+from code.Player import Player, Player2
 
 
 class EntityFactory:
@@ -18,3 +18,5 @@ class EntityFactory:
 
             case 'player':
                 return Player('player', position)
+            case 'player2':
+                return Player2('player2', position)

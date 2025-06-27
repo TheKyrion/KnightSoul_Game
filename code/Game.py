@@ -11,7 +11,7 @@ class Game:
     def __init__(self):
         pygame.init()
         self.window = pygame.display.set_mode((LARG_TELA, ALTURA_TELA))
-        pygame.display.set_caption("Meu Jogo 2D") # Adicionei um título para a janela
+        pygame.display.set_caption("Knight Soul") # Adicionei um título para a janela
 
     def run(self):
         current_state = "menu" # Começamos no estado de menu
