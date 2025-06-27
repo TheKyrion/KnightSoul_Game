@@ -3,7 +3,7 @@ import pygame
 from pygame import Surface, Rect
 from pygame.font import Font
 from code.Player import Player
-from code.Const import COLOR_WHITE, ALTURA_TELA, LARG_TELA  # Importe LARG_TELA
+from code.Const import COLOR_WHITE, ALTURA_TELA, LARG_TELA, CARPET_BOTTOM  # Importe LARG_TELA
 from code.Entity import Entity
 from code.EntityFactory import EntityFactory
 from code.Background import Background  # Importar Background
@@ -25,6 +25,12 @@ class Level:
         if "COOPERATIVO" in game_mode:
             p2 = EntityFactory.get_entity('player2', (200, ALTURA_TELA // 2))
             self.game_entities.append(p2)
+
+        enemy1 = EntityFactory.get_entity(
+            'enemy',
+            (600, 0)  # 64 = altura aproximada do sprite
+        )
+        self.game_entities.append(enemy1)
 
         self.timeout = 20000
 
