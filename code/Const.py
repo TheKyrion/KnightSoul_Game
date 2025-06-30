@@ -20,7 +20,10 @@ MENU_OPTION = ("NOVO JOGO 1P",
                "PONTUAÇÃO",
                "SAIR")
 
+
+
 ENTITY_SPEED = {
+    # ---------- fundo Level 1 ----------
     'bg10': 0,
     'bg11': 1,
     'bg12': 2,
@@ -28,4 +31,13 @@ ENTITY_SPEED = {
     'bg14': 4,
     'bg15': 5,
     'bg16': 6,
+
+    # ---------- fundo Level 2 ----------
+    'bg20': 0,     # camada mais distante
+    'bg21': 1,
+    'bg22': 2,
+    'bg23': 3,
+    'bg24': 4,
+    'bg25': 5,
+    'bg26': 6      # camada mais próxima
 }

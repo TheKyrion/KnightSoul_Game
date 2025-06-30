@@ -2,45 +2,62 @@ import sys, pygame
 from pygame.font import Font
 from pygame import Surface, Rect
 
-from code.Const import COLOR_WHITE, ALTURA_TELA, LARG_TELA
+from code.Const import COLOR_WHITE, ALTURA_TELA
 from code.Entity import Entity
 from code.EntityFactory import EntityFactory
-from code.Player import Player, Player2
+from code.Player import Player
 from code.Enemy import Enemy
-from code.Background import Background
 
 
 class Level:
-    def __init__(self, window, name, game_mode):
+    """Fase do jogo.  Level 1 → 20 s;  Level 2 → 30 s."""
+
+    def __init__(self, window, name, game_mode, players=None):
         self.window = window
-        self.name = name
+        self.name = name  # "Level 1"  ou  "Level 2"
         self.game_mode = game_mode
 
-        # -------- fundos -------------------------------------------------
-        self.backgrounds = EntityFactory.get_entity("bg1")
+        # -------- fundo ----------------------------------------------
+        bg_tag = "bg1" if name == "Level 1" else "bg2"
+        self.backgrounds = EntityFactory.get_entity(bg_tag)
 
-        # -------- lista principal de entidades --------------------------
+        # -------- lista de entidades ---------------------------------
         self.game_entities: list[Entity] = []
 
-        # player 1 (âncora da câmera)
-        self.player = EntityFactory.get_entity("player",
-                                               (100, ALTURA_TELA // 2))
-        self.game_entities.append(self.player)
+        # -------- players --------------------------------------------
+        if players is None:  # Level 1
+            p1 = EntityFactory.get_entity("player",
+                                          (100, ALTURA_TELA // 2))
+            self.game_entities.append(p1)
+            if "COOPERATIVO" in game_mode:
+                p2 = EntityFactory.get_entity("player2",
+                                              (200, ALTURA_TELA // 2))
+                self.game_entities.append(p2)
+        else:  # Level 2
+            for pl in players:
+                pl.rect.centery = ALTURA_TELA // 2
+                pl.hp = 100  # restaura HP
+                self.game_entities.append(pl)
+            p1 = players[0]
 
-        # player 2 opcional
-        if "COOPERATIVO" in game_mode:
-            p2 = EntityFactory.get_entity("player2",
-                                          (200, ALTURA_TELA // 2))
-            self.game_entities.append(p2)
+        self.player = p1  # ancora
 
-        # inimigos iniciais
+        # -------- inimigos ------------------------------------------
         for x in (600, 900, 1200, 1500, 1800):
-            e = EntityFactory.get_entity("enemy", (x, 0))
-            self.game_entities.append(e)
+            self.game_entities.append(
+                EntityFactory.get_entity("enemy", (x, 0))
+            )
 
-        self.timeout = 20000
+        # -------- cronômetro ----------------------------------------
+        if name == "Level 1":
+            self.time_limit = 20_000  # 20 s
+        elif name == "Level 2":
+            self.time_limit = 20_000  # 30 s
+        else:
+            self.time_limit = 0  # sem limite
+        self.time_left = self.time_limit
 
-    # ===================================================================
+    # =================================================================
     def run(self):
         pygame.mixer_music.load("./assets/level1.mp3")
         pygame.mixer_music.play(-1)
@@ -48,28 +65,36 @@ class Level:
 
         level_active = True
         while level_active:
-            clock.tick(60)
+            dt = clock.tick(60)
 
-            # === 1. Eventos ============================================
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
+            # ---------------- eventos --------------------------------
+            for ev in pygame.event.get():
+                if ev.type == pygame.QUIT:
                     pygame.quit();
                     sys.exit()
-                if event.type == pygame.KEYDOWN \
-                        and event.key == pygame.K_ESCAPE:
+                if ev.type == pygame.KEYDOWN and ev.key == pygame.K_ESCAPE:
                     level_active = False
 
-            # === 2. Move players / inimigos ============================
+            # ---------------- cronômetro -----------------------------
+            if self.time_limit:
+                self.time_left -= dt
+
+                if self.name == "Level 1" and self.time_left <= 0:
+                    players_alive = [e for e in self.game_entities
+                                     if isinstance(e, Player)]
+                    return "next_level", players_alive
+
+                if self.name == "Level 2" and self.time_left <= 0:
+                    return "level_finished", None
+
+            # ---------------- move entidades -------------------------
             players = [e for e in self.game_entities if isinstance(e, Player)]
             enemies = [e for e in self.game_entities if isinstance(e, Enemy)]
 
             for ent in self.game_entities:
-                if isinstance(ent, Player):
-                    ent.move()
-                elif isinstance(ent, Enemy):
-                    ent.move(players)  # passa lista de players
+                ent.move(players) if isinstance(ent, Enemy) else ent.move()
 
-            # === 3. Scroll da câmera (player 1) ========================
+            # ---------------- scroll câmera --------------------------
             delta_x = getattr(self.player, "delta_x", 0)
             for bg in self.backgrounds:
                 bg.move(delta_x)
@@ -77,32 +102,25 @@ class Level:
                 if ent is not self.player:
                     ent.rect.x -= delta_x
 
-            # === 4. Colisões / dano / score ===========================
-            # players atacam
+            # ---------------- combate / score ------------------------
             for pl in players:
                 hb = pl.get_attack_hitbox()
-                if not hb:
-                    continue
-                for en in enemies:
-                    if en.state == "DEATH":
-                        continue
-                    if hb.colliderect(en.rect):
-                        died = en.take_damage(1)
-                        if died:
-                            pl.score += 100  # +100 pontos!
+                if hb:
+                    for en in enemies:
+                        if en.state != "DEATH" and hb.colliderect(en.rect):
+                            if en.take_damage(1):
+                                pl.score += 100
 
-            # inimigos atacam
             now = pygame.time.get_ticks()
             for en in enemies:
                 hb = en.get_attack_hitbox()
-                if not hb or now < en.next_attack:
-                    continue
-                for pl in players:
-                    if pl.state != "death" and hb.colliderect(pl.rect):
-                        pl.take_damage(1)
-                        en.next_attack = now + en.ATTACK_COOLDOWN
+                if hb and now >= en.next_attack:
+                    for pl in players:
+                        if pl.state != "death" and hb.colliderect(pl.rect):
+                            pl.take_damage(1)
+                            en.next_attack = now + en.ATTACK_COOLDOWN
 
-            # === 5. Atualiza animações + limpa mortos =================
+            # ---------------- update / limpa mortos ------------------
             alive = []
             for ent in self.game_entities:
                 ent.update()
@@ -115,38 +133,32 @@ class Level:
                 alive.append(ent)
             self.game_entities = alive
 
-            # === 6. Desenha ===========================================
-            self.window.fill((0, 0, 0))  # clear
-
+            # ---------------- desenha -------------------------------
+            self.window.fill((0, 0, 0))
             for bg in self.backgrounds:
                 self.window.blit(bg.surf, bg.rect)
             for ent in self.game_entities:
                 self.window.blit(ent.surf, ent.rect)
 
-            # HUD (HP + SCORE)
             self.draw_hud(players)
-
-            # extras: fps / entidades
-            self.level_text(14, f"fps: {clock.get_fps():.0f}",
-                            COLOR_WHITE, (10, ALTURA_TELA - 35))
-            self.level_text(14, f"Entidades: {len(self.game_entities)}",
-                            COLOR_WHITE, (10, ALTURA_TELA - 20))
+            if self.time_limit:
+                self.level_text(30,
+                                f"TIME: {max(0, self.time_left) // 1000:02d}s",
+                                COLOR_WHITE, (10, 50))
 
             pygame.display.flip()
 
-        return "level_finished"
+        return "level_finished", None  # abortado por ESC
 
-    # ------------------------------------------------------------------
+    # =================================================================
     def draw_hud(self, players):
-        """Mostra HP e SCORE de cada player no canto sup-esq."""
         x0, y0, dy = 10, 10, 20
         for idx, pl in enumerate(players, 1):
             txt = f"P{idx}  HP:{pl.hp:3d}   SCORE:{pl.score:5d}"
             self.level_text(30, txt, COLOR_WHITE, (x0, y0 + (idx - 1) * dy))
 
-    # ------------------------------------------------------------------
     def level_text(self, size: int, txt: str, color: tuple, pos: tuple):
-        font: Font = pygame.font.SysFont("Lucida Sans Typewriter", size)
-        surf: Surface = font.render(txt, True, color).convert_alpha()
-        rect: Rect = surf.get_rect(topleft=pos)
+        font = pygame.font.SysFont("Lucida Sans Typewriter", size)
+        surf = font.render(txt, True, color).convert_alpha()
+        rect = surf.get_rect(topleft=pos)
         self.window.blit(surf, rect)
