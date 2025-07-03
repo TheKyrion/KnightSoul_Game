@@ -29,7 +29,7 @@ class Level:
             p1 = EntityFactory.get_entity("player",
                                           (100, ALTURA_TELA // 2))
             self.game_entities.append(p1)
-            if "COOPERATIVO" in game_mode:
+            if "2P" in game_mode:
                 p2 = EntityFactory.get_entity("player2",
                                               (200, ALTURA_TELA // 2))
                 self.game_entities.append(p2)
