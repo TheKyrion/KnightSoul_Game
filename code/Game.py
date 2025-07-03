@@ -88,7 +88,11 @@ class Game:
                 if ev.type == pygame.KEYDOWN and ev.key == pygame.K_ESCAPE:
                     waiting = False
 
-            self.window.fill((0, 0, 70))
+            try:
+                bg = pygame.image.load("./assets/Battleground4.png").convert()
+                self.window.blit(bg, (0, 0))
+            except pygame.error:
+                self.window.fill((0, 0, 70))  # fallback caso a imagem não exista
 
             title = font_big.render("★  HIGH SCORES  ★", True, (255,255,0))
             self.window.blit(title, (LARG_TELA//2 - title.get_width()//2, 40))
