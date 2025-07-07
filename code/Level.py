@@ -50,9 +50,9 @@ class Level:
 
         # -------- cronômetro ----------------------------------------
         if name == "Level 1":
-            self.time_limit = 20_000  # 20 s
+            self.time_limit = 10_000  # 20 s
         elif name == "Level 2":
-            self.time_limit = 20_000  # 20 s
+            self.time_limit = 10_000  # 20 s
         else:
             self.time_limit = 0  # sem limite
         self.time_left = self.time_limit
