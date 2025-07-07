@@ -41,7 +41,7 @@ class Game:
             # ------------- LEVEL 1 -----------------------------------
             if state == "level_1":
                 lvl1 = Level(self.window, "Level 1", game_mode)
-                result, keep_players = lvl1.run()  # ("next_level", list)
+                result, keep_players = lvl1.run()
                 state = "level_2" if result == "next_level" else "menu"
                 continue
 

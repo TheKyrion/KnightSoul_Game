@@ -7,31 +7,41 @@ from code.Entity import Entity
 
 
 class Enemy(Entity):
-    ATTACK_RANGE      = 30   # inicia ataque só bem perto
-    ATTACK_COOLDOWN   = 20    # ms entre golpes
+    ATTACK_RANGE = 30  # inicia ataque só bem perto
+    ATTACK_COOLDOWN = 20  # ms entre golpes
 
-    def __init__(self, name: str, position: tuple):
-        super().__init__(name, position)
+    def __init__(self, name, position):
+        # 1) carrega um dos sprites reais para definir tamanho
+        idle_sheet = pygame.image.load("./assets/FLYING.png").convert_alpha()
+        self.idle_frames = self._split(idle_sheet, 4)
 
-        idle   = pygame.image.load("./assets/FLYING.png").convert_alpha()
+        # usa o primeiro quadro como superfície inicial
+        first_frame = self.idle_frames[0]
+        self.surf = first_frame
+        self.rect = first_frame.get_rect(topleft=position)
+
+        # >>> NÃO chame super().__init__()  <<<
+        # super().__init__() só serviria para procurar enemy.png
+
+        # agora continue carregando o resto normalmente:
         attack = pygame.image.load("./assets/ATTACK.png").convert_alpha()
-        hurt   = pygame.image.load("./assets/HURT.png").convert_alpha()
-        death  = pygame.image.load("./assets/DEATH.png").convert_alpha()
+        hurt = pygame.image.load("./assets/HURT.png").convert_alpha()
+        death = pygame.image.load("./assets/DEATH.png").convert_alpha()
 
-        self.idle_frames   = self._split(idle,   4)
         self.attack_frames = self._split(attack, 8)
-        self.hurt_frames   = self._split(hurt,   4)
-        self.death_frames  = self._split(death,  6)
+        self.hurt_frames = self._split(hurt, 4)
+        self.death_frames = self._split(death, 6)
 
+        # atributos…
         self.state = "FLYING"
         self.frame_index = 0
         self.delay = 100
         self.last_update = pygame.time.get_ticks()
 
-        self.speed  = 1
-        self.facing = 1                   # 1→dir, -1→esq
-        self.hp     = 5                   # mais vida
-        self.next_attack = 0              # cooldown
+        self.speed = 1
+        self.facing = 1  # 1→dir, -1→esq
+        self.hp = 5  # mais vida
+        self.next_attack = 0  # cooldown
 
         self.surf = self.idle_frames[0]
         self.rect = self.surf.get_rect(topleft=position)
@@ -65,7 +75,6 @@ class Enemy(Entity):
                 self.facing *= -1
 
         self.rect.bottom = CARPET_BOTTOM - 6
-
 
     # -----------------------------------------------------------------
 

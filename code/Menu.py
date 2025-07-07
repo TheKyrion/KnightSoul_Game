@@ -15,7 +15,7 @@ class Menu:
         # Carrega a imagem de fundo do menu, se houver
         try:
             self.background_image = pygame.image.load(
-                './assets/Battleground2.png').convert_alpha()  # Substitua pelo seu BG de menu
+                './assets/Battleground2.png').convert_alpha()
             self.background_image = pygame.transform.scale(self.background_image, (LARG_TELA, ALTURA_TELA))
         except FileNotFoundError:
             print("[ERRO] Imagem de fundo do menu não encontrada. Usando fundo preto.")
