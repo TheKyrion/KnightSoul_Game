@@ -52,7 +52,7 @@ class Level:
         if name == "Level 1":
             self.time_limit = 20_000  # 20 s
         elif name == "Level 2":
-            self.time_limit = 20_000  # 30 s
+            self.time_limit = 20_000  # 20 s
         else:
             self.time_limit = 0  # sem limite
         self.time_left = self.time_limit
@@ -60,6 +60,7 @@ class Level:
     # =================================================================
     def run(self):
         pygame.mixer_music.load("./assets/level1.mp3")
+        pygame.mixer_music.set_volume(0.2)
         pygame.mixer_music.play(-1)
         clock = pygame.time.Clock()
 
@@ -132,6 +133,14 @@ class Level:
                     continue
                 alive.append(ent)
             self.game_entities = alive
+            # -------------------------------------------------------
+            # Se QUALQUER jogador terminou a animação de morte,
+            # encerra a fase e volta ao menu
+            # -------------------------------------------------------
+            for pl in alive:
+                if isinstance(pl, Player) and pl.state == "death" \
+                        and pl.frame_index >= len(pl.death_frames) - 1:
+                    return "player_dead", None
 
             # ---------------- desenha -------------------------------
             self.window.fill((0, 0, 0))
@@ -142,7 +151,7 @@ class Level:
 
             self.draw_hud(players)
             if self.time_limit:
-                self.level_text(30,
+                self.level_text(20,
                                 f"TIME: {max(0, self.time_left) // 1000:02d}s",
                                 COLOR_WHITE, (10, 50))
 
@@ -155,7 +164,7 @@ class Level:
         x0, y0, dy = 10, 10, 20
         for idx, pl in enumerate(players, 1):
             txt = f"P{idx}  HP:{pl.hp:3d}   SCORE:{pl.score:5d}"
-            self.level_text(30, txt, COLOR_WHITE, (x0, y0 + (idx - 1) * dy))
+            self.level_text(14, txt, COLOR_WHITE, (x0, y0 + (idx - 1) * dy))
 
     def level_text(self, size: int, txt: str, color: tuple, pos: tuple):
         font = pygame.font.SysFont("Lucida Sans Typewriter", size)
